@@ -1,64 +1,64 @@
 ---
 name: best-github-workflows
 description: >-
-  GitHub Actions 规范目录。创建、修改或审查 workflow 时先匹配已登记的 profile，再按该 profile 全文实施。
-  当前只有 go-single-binary-docker：Go 单静态二进制，同时把镜像发到 GHCR，并用 v 前缀 semver tag 打 GitHub Release。
-  Use when adding, editing, or reviewing GitHub Actions for a Go single static binary that also publishes a Docker image (tests, GHCR tag policy, semver releases).
-  Future workflow specs are additional profiles registered here; do not stretch an existing profile onto another project shape.
+  Catalog of GitHub Actions workflow profiles. When creating, editing, or reviewing workflows, match a registered profile and follow that document in full.
+  The current profile is go-single-binary-docker: one Go static binary, a GHCR image, and a GitHub Release from a v-prefixed semver tag.
+  Use when adding or changing CI for a Go single static binary that also publishes a Docker image (tests, GHCR tag policy, semver releases).
+  Future workflow specs are additional profiles registered here. Do not stretch an existing profile onto another project shape.
 ---
 
 # Best GitHub Workflows
 
-这个 skill 是 GitHub Actions workflow 规范的目录。每一份规范是一个 **profile**：一种项目形态下的一整套 workflow，包含事件划分、权限、并发、发布物和明确拒绝的做法。
+This skill is a catalog of GitHub Actions workflow specifications. Each specification is a **profile**: the full workflow set for one project shape, including which events each file owns, permissions, concurrency, what gets published, and the choices that look like simplifications but have to stay.
 
-实施时以 profile 全文为准。目录表只负责选择，不是规范本身。
+Follow the profile document, not the catalog row. The row only chooses which document to read.
 
-## 何时读取
+## When to read this
 
-用户要新建、修改或审查 GitHub Actions，并且仓库的形态能对上下面某一行时，先读本文件，再把对应 profile **从头读到尾**，然后才改 YAML。
+Read this file when the user wants GitHub Actions created, edited, or reviewed and the repository matches a row below. Then read that profile from start to finish before changing YAML.
 
-审查既有 workflow 时用同一份 profile。对得上的差异按 profile 改回去；profile 写成「不要做」的方案，不要当成可以顺手补上的增强。
+Use the same profile to review an existing workflow. Where the repository differs, change it to match the profile. A choice the profile rejects is not an enhancement to add back.
 
-## Profile 目录
+## Profile catalog
 
-| id | 适用 | 文档 |
+| id | Applies to | Document |
 | --- | --- | --- |
-| `go-single-binary-docker` | 仓库根目录一个 `package main`，`CGO_ENABLED=0` 的静态二进制，同时发布一份 Docker 镜像到 GHCR | [profiles/go-single-binary-docker.md](profiles/go-single-binary-docker.md) |
+| `go-single-binary-docker` | One `package main` at the repository root, a `CGO_ENABLED=0` static binary, and one Docker image published to GHCR | [profiles/go-single-binary-docker.md](profiles/go-single-binary-docker.md) |
 
-没有登记的 profile 就不存在。不要根据 id 的命名方式提前发明一份来用。
+A profile that is not in this table does not exist. Do not invent one from the shape of an id.
 
-## Profile 之间的边界
+## How profiles relate
 
-- 一个仓库只用一份 profile。Profile 之间不继承、不覆盖、不互相引用规则。
-- 新的项目形态是一份新 profile，不是写进现有 profile 的新小节。
-- 在第二份 profile 确实需要同一条规则之前，不要抽 `shared/`。那之前的重复是刻意的。
+- A repository uses one profile. Profiles do not inherit, override, or cite each other's rules.
+- A new project shape is a new profile, not a new section inside an existing one.
+- Do not extract a `shared/` document until a second profile needs the same rule verbatim. Until then, duplication is intentional.
 
-## 每份 profile 都要有的内容
+## What every profile contains
 
-新增 profile 时，文档里这些节都要在，名字可以按该形态调整：
+A new profile document needs these sections. Names can follow the shape being specified.
 
-1. **适用与不适用。** 写清哪种仓库用它，以及邻近但必须排除的形态。
-2. **仓库参数。** 实施时替换的名字（二进制名、缓存 scope、并发组前缀等），并给出一套参考值。
-3. **Workflow 文件与事件。** 每个文件拥有哪些事件；同一事件只跑一次测试；测试失败不能发布。
-4. **权限。** Workflow 级是上限；job 级整组替换、不合并；被调用的 workflow 不能把调用方的权限放大。
-5. **并发。** 组名、谁可以取消谁、调用方和 `workflow_call` 不能共用同一个 group。
-6. **明确拒绝的做法。** 写上容易被当成简化或补全、但必须留住的决定，以及原因。
-7. **要同步的说明。** 除了 YAML 以外，哪些 README 或 Release 正文必须和规范一起改。
-8. **文件头注释。** 只打开 YAML 的人必须能看到不可回退的理由。不写「见 skill」就结束。
+1. **Applicability.** Which repositories use it, and the nearby shapes that are out of scope.
+2. **Parameters.** Names the implementing repository fills in (binary name, cache scope, concurrency prefix, and so on), with one set of reference values.
+3. **Workflow files and events.** Which file owns which events, one test run per event, and a failing test cannot publish.
+4. **Permissions.** The workflow-level block is the ceiling. Job-level permissions replace that set; they do not merge. A called workflow cannot widen the caller's grant.
+5. **Concurrency.** Group names, what may cancel what, and why a caller and its `workflow_call` callee must not share a group.
+6. **Rejected choices.** Decisions that are easy to "simplify" or complete, and why they stay.
+7. **Text that must move with the workflows.** Which README section or release body stays in sync with the YAML.
+8. **File headers.** Someone opening only the YAML has to see why a decision cannot be reverted. A header that says "see the skill" is not enough.
 
-## 新增一份 profile
+## Adding a profile
 
-1. id 使用小写字母和连字符，描述项目形态，不描述某一个仓库。`go-single-binary-docker` 是这个形式。
-2. 添加 `profiles/<id>.md`，按上一节写完。
-3. 在上面的目录表加一行。
-4. 不要为了容纳新 profile 去改旧 profile 的规则。
+1. Use a lowercase hyphenated id that names the project shape, not a repository. `go-single-binary-docker` is that form.
+2. Add `profiles/<id>.md` with the sections above.
+3. Add one row to the catalog.
+4. Do not change an older profile's rules to make room for the new one.
 
-## 没有 profile 能覆盖时
+## When no profile fits
 
-说明目录里有哪些 profile、当前仓库哪一条对不上，然后停。不要放宽 `go-single-binary-docker` 去套这些仓库：
+Say which profiles exist and which condition of the current repository fails, then stop. Do not widen `go-single-binary-docker` to cover:
 
-- 需要 cgo，或必须在 macOS / Windows runner 上编译
-- 仓库根目录不是唯一的 `package main`
-- 纯库：没有要发布的二进制，也没有镜像
-- 一次要推多份镜像，或 monorepo 里有多条独立的发布线
-- 默认分支的触发不能落成一个字面量分支名，同时又要求从非默认分支推 `:latest`
+- cgo, or a binary that has to be compiled on a macOS or Windows runner
+- a repository whose only `package main` is not at the root
+- a library with no release binary and no image
+- more than one image, or a monorepo with several independent release lines
+- a default branch that cannot be named literally in the trigger while still publishing `:latest` from a non-default branch
